@@ -1,0 +1,31 @@
+/* You might not need much custom CSS for the MUI Timeline, */
+/* but you can add overrides here if necessary */
+.timeline {
+    /* Example: Adjust spacing */
+}
+
+.timelineItem {
+    /* Example: Further customize item appearance */
+}
+
+.milestone {
+    /* Example: Style the milestone dot */
+}
+
+.milestoneContent {
+    /* Example: Style the content panel */
+    padding: 16px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    background-color: white;
+}
+
+.milestoneTitle {
+    font-weight: bold;
+    margin-bottom: 4px;
+}
+
+.milestoneStatus {
+    font-style: italic;
+    color: #555;
+}

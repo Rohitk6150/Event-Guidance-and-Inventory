@@ -1,0 +1,23 @@
+/* Example for EventList */
+.eventCard {
+    margin-bottom: 16px;
+    padding: 16px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.eventTitle {
+    font-size: 1.2rem;
+    margin-bottom: 8px;
+}
+
+.eventDate {
+    color: #777;
+    margin-bottom: 4px;
+}
+
+.actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
