@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useAuth } from '../../hooks/useAuth'; // Correct import path for useAuth
+import { useAuth } from '../../context/AuthContext';
 import { TextField, Button, Container, Typography, Box, CircularProgress } from '@mui/material';
 
 const EditInventoryItem = () => {
