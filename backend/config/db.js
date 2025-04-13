@@ -10,7 +10,7 @@ const connectDB = async () => {
     //     });
 
         try {
-            const conn = await mongoose.connect('mongodb://localhost:27017/eventInvent');
+            const conn = await mongoose.connect('mongodb+srv://nobigamer00:e1GdrWRwo7wHmmVQ@cluster0.vl7qd5h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0');
 
         console.log(`MongoDB Connected: ${conn.connection.host}`);
     } catch (error) {
