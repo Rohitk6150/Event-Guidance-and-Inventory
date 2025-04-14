@@ -12,8 +12,10 @@ import {
     IconButton,
     Box,
     CircularProgress,
+    Alert,
+    Tooltip,
 } from '@mui/material';
-import { Visibility as VisibilityIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Visibility as VisibilityIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 const EventList = () => {
     const [events, setEvents] = useState([]);
@@ -47,12 +49,27 @@ const EventList = () => {
         }
     }, [token, navigate]);
 
+    const handleEdit = (id) => {
+        navigate(`/events/edit/${id}`);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this event?')) {
+            try {
+                await eventService.deleteEvent(id, token);
+                setEvents(events.filter(event => event._id !== id));
+            } catch (err) {
+                setError(err.message || 'Failed to delete event');
+            }
+        }
+    };
+
     if (loading) {
         return <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px"><CircularProgress /></Box>;
     }
 
     if (error) {
-        return <Typography color="error">{error}</Typography>;
+        return <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>;
     }
 
     return (
@@ -82,9 +99,16 @@ const EventList = () => {
                                 <IconButton edge="end" aria-label="view" component={Link} to={`/events/${event._id}`}>
                                     <VisibilityIcon />
                                 </IconButton>
-                                <IconButton edge="end" aria-label="edit" component={Link} to={`/events/edit/${event._id}`}>
-                                    <EditIcon />
-                                </IconButton>
+                                <Tooltip title="Edit">
+                                    <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(event._id)}>
+                                        <EditIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                    <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(event._id)}>
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </ListItem>
                         </Paper>
                     ))}
