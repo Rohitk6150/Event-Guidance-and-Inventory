@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import eventService from '../../services/EventService';
 import {
     Typography,
     List,
@@ -27,15 +27,12 @@ const EventList = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await axios.get('/api/events', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setEvents(response.data);
+                const eventsData = await eventService.getAllEvents(token);
+                setEvents(eventsData);
             } catch (err) {
                 setError('Failed to fetch events.');
                 console.error('Error fetching events:', err);
-                // Optionally redirect to login if unauthorized
-                if (err.response?.status === 401) {
+                if (err.message.includes('401')) {
                     navigate('/login');
                 }
             } finally {
@@ -60,9 +57,19 @@ const EventList = () => {
 
     return (
         <div>
-            <Typography variant="h4" gutterBottom>
-                Upcoming Events
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h4">
+                    Upcoming Events
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    component={Link}
+                    to="/events/create"
+                >
+                    Create Event
+                </Button>
+            </Box>
             {events.length > 0 ? (
                 <List>
                     {events.map(event => (
@@ -70,7 +77,7 @@ const EventList = () => {
                             <ListItem alignItems="center">
                                 <ListItemText
                                     primary={event.name}
-                                    secondary={`Date: ${new Date(event.date).toLocaleDateString()}`}
+                                    secondary={`Date: ${new Date(event.date).toLocaleDateString()}${event.time ? ` at ${event.time}` : ''}`}
                                 />
                                 <IconButton edge="end" aria-label="view" component={Link} to={`/events/${event._id}`}>
                                     <VisibilityIcon />

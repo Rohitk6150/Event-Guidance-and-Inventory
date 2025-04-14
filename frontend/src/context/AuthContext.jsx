@@ -11,19 +11,29 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({children}) => {
-    const [token, setToken] = useState(localStorage.getItem('token'));
+    const [token, setToken] = useState(() => {
+        // Initialize token from localStorage
+        const storedToken = localStorage.getItem('token');
+        return storedToken || null;
+    });
     const [isAuthenticated, setIsAuthenticated] = useState(!!token);
 
     useEffect(() => {
+        // Update localStorage and authentication state when token changes
         if (token) {
             localStorage.setItem('token', token);
+            setIsAuthenticated(true);
         } else {
             localStorage.removeItem('token');
+            setIsAuthenticated(false);
         }
-        setIsAuthenticated(!!token);
     }, [token]);
 
     const login = (newToken) => {
+        if (!newToken) {
+            console.error('No token provided to login');
+            return;
+        }
         setToken(newToken);
     };
 

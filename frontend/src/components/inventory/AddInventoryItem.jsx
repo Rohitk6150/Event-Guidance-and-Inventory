@@ -1,9 +1,9 @@
 // frontend/src/components/inventory/AddInventoryItem.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
+import { TextField, Button, Container, Typography, Box, Alert } from '@mui/material';
+import inventoryService from '../../services/InventoryService';
 
 const AddInventoryItem = () => {
     const navigate = useNavigate();
@@ -20,14 +20,13 @@ const AddInventoryItem = () => {
         setError('');
         setLoading(true);
         try {
-            const response = await axios.post(
-                '/api/inventory',
+            await inventoryService.addInventoryItem(
                 { name, description, quantity, unit },
-                { headers: { Authorization: `Bearer ${token}` } }
+                token
             );
             navigate('/inventory'); // Redirect to inventory list after successful addition
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to add inventory item');
+            setError(err.message || 'Failed to add inventory item');
             console.error('Error adding inventory item:', err);
         } finally {
             setLoading(false);
@@ -41,7 +40,7 @@ const AddInventoryItem = () => {
                     Add New Inventory Item
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-                    {error && <Typography color="error" sx={{ mt: 1 }}>{error}</Typography>}
+                    {error && <Alert severity="error" sx={{ mt: 1 }}>{error}</Alert>}
                     <TextField
                         margin="normal"
                         required
@@ -92,8 +91,7 @@ const AddInventoryItem = () => {
                         sx={{ mt: 3 }}
                         disabled={loading}
                     >
-                        Add Item
-                        {loading && <span className="loading-indicator"></span>}
+                        {loading ? 'Adding...' : 'Add Item'}
                     </Button>
                 </Box>
             </Box>

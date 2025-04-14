@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useAuth } from '../../context/AuthContext';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
-    Typography,
     Table,
     TableBody,
     TableCell,
@@ -11,95 +8,130 @@ import {
     TableHead,
     TableRow,
     Paper,
-    IconButton,
+    Button,
+    Typography,
     Box,
     CircularProgress,
+    Alert,
+    IconButton,
+    Tooltip,
 } from '@mui/material';
-import { Visibility as VisibilityIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import inventoryService from '../../services/InventoryService';
+import { useAuth } from '../../context/AuthContext';
 
 const InventoryList = () => {
     const [inventory, setInventory] = useState([]);
-    const { token } = useAuth();
-    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState('');
+    const [error, setError] = useState(null);
+    const navigate = useNavigate();
+    const { token } = useAuth();
 
     useEffect(() => {
         const fetchInventory = async () => {
-            setLoading(true);
-            setError('');
             try {
-                const response = await axios.get('/api/inventory', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setInventory(response.data);
+                setLoading(true);
+                setError(null);
+                const data = await inventoryService.getAllInventoryItems(token);
+                setInventory(data);
             } catch (err) {
-                setError('Failed to fetch inventory.');
-                console.error('Error fetching inventory:', err);
-                if (err.response?.status === 401) {
-                    navigate('/login');
-                }
+                setError(err.message || 'Failed to fetch inventory items');
             } finally {
                 setLoading(false);
             }
         };
 
-        if (token) {
-            fetchInventory();
-        } else {
-            navigate('/login');
+        fetchInventory();
+    }, [token]);
+
+    const handleEdit = (id) => {
+        navigate(`/inventory/edit/${id}`);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this item?')) {
+            try {
+                await inventoryService.deleteInventoryItem(id, token);
+                setInventory(inventory.filter(item => item._id !== id));
+            } catch (err) {
+                setError(err.message || 'Failed to delete inventory item');
+            }
         }
-    }, [token, navigate]);
+    };
 
     if (loading) {
-        return <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px"><CircularProgress /></Box>;
+        return (
+            <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+                <CircularProgress />
+            </Box>
+        );
     }
 
     if (error) {
-        return <Typography color="error">{error}</Typography>;
+        return (
+            <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+            </Alert>
+        );
     }
 
     return (
-        <div>
-            <Typography variant="h4" gutterBottom>
-                Inventory
-            </Typography>
-            {inventory.length > 0 ? (
-                <TableContainer component={Paper}>
-                    <Table aria-label="inventory table">
-                        <TableHead>
-                            <TableRow>
-                                <TableCell>Name</TableCell>
-                                <TableCell align="right">Quantity</TableCell>
-                                <TableCell align="right">Unit</TableCell>
-                                <TableCell>Actions</TableCell>
-                            </TableRow>
-                        </TableHead>
-                        <TableBody>
-                            {inventory.map(item => (
-                                <TableRow key={item._id}>
-                                    <TableCell component="th" scope="row">
-                                        {item.name}
-                                    </TableCell>
-                                    <TableCell align="right">{item.quantity}</TableCell>
-                                    <TableCell align="right">{item.unit}</TableCell>
-                                    <TableCell>
-                                        <IconButton component={Link} to={`/inventory/${item._id}`} aria-label="view">
-                                            <VisibilityIcon />
-                                        </IconButton>
-                                        <IconButton component={Link} to={`/inventory/edit/${item._id}`} aria-label="edit">
+        <Box>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h5" component="h2">
+                    Inventory Items
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={() => navigate('/inventory/add')}
+                >
+                    Add New Item
+                </Button>
+            </Box>
+
+            <TableContainer component={Paper}>
+                <Table>
+                    <TableHead>
+                        <TableRow>
+                            <TableCell>Name</TableCell>
+                            <TableCell>Category</TableCell>
+                            <TableCell>Quantity</TableCell>
+                            <TableCell>Unit</TableCell>
+                            <TableCell>Actions</TableCell>
+                        </TableRow>
+                    </TableHead>
+                    <TableBody>
+                        {inventory.map((item) => (
+                            <TableRow key={item._id}>
+                                <TableCell>{item.name}</TableCell>
+                                <TableCell>{item.category}</TableCell>
+                                <TableCell>{item.quantity}</TableCell>
+                                <TableCell>{item.unit}</TableCell>
+                                <TableCell>
+                                    <Tooltip title="Edit">
+                                        <IconButton
+                                            color="primary"
+                                            onClick={() => handleEdit(item._id)}
+                                        >
                                             <EditIcon />
                                         </IconButton>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                </TableContainer>
-            ) : (
-                <Typography>No inventory items found.</Typography>
-            )}
-        </div>
+                                    </Tooltip>
+                                    <Tooltip title="Delete">
+                                        <IconButton
+                                            color="error"
+                                            onClick={() => handleDelete(item._id)}
+                                        >
+                                            <DeleteIcon />
+                                        </IconButton>
+                                    </Tooltip>
+                                </TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </TableContainer>
+        </Box>
     );
 };
 

@@ -1,8 +1,8 @@
 // frontend/src/components/events/CreateEvent.js
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import eventService from '../../services/EventService';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 
 const CreateEvent = () => {
@@ -21,14 +21,13 @@ const CreateEvent = () => {
         setError('');
         setLoading(true);
         try {
-            const response = await axios.post(
-                '/api/events',
+            await eventService.createEvent(
                 { name, description, date, time, location },
-                { headers: { Authorization: `Bearer ${token}` } }
+                token
             );
-            navigate('/events'); // Redirect to events list after successful creation
+            navigate('/events');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to create event');
+            setError(err.message || 'Failed to create event');
             console.error('Error creating event:', err);
         } finally {
             setLoading(false);
