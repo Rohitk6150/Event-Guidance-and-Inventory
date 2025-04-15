@@ -51,7 +51,7 @@ const AppRouter = () => {
                             <Route path="/inventory" element={<PrivateRoute><InventoryListPage /></PrivateRoute>} />
                             <Route path="/inventory/add" element={<PrivateRoute><AddInventoryPage /></PrivateRoute>} />
                             <Route path="/inventory/edit/:id" element={<PrivateRoute><EditInventoryPage /></PrivateRoute>} />
-                            <Route path="/" element={<Navigate to="/events" />} />
+                            <Route path="/" element={<PrivateRoute><Navigate to="/events" /></PrivateRoute>} />
                         </Routes>
                     </div>
                 </Router>
