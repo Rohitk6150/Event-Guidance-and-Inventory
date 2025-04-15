@@ -183,20 +183,38 @@ app.post('/api/events', protect, async (req, res) => {
     console.log('Create event endpoint hit');
     console.log('Request body:', req.body);
     
-    const { name, description, date, time, location } = req.body;
+    const { name, description, date, time, location, status, milestones = [], inventory = [] } = req.body;
     
-    if (!name || !date || !time) {
-      return res.status(400).json({ message: 'Please provide required fields: name, date, time' });
+    // Validate required fields
+    if (!name || !date || !time || !status) {
+      console.log('Missing required fields:', { name, date, time, status });
+      return res.status(400).json({ 
+        message: 'Please provide required fields: name, date, time, and status',
+        missing: {
+          name: !name,
+          date: !date,
+          time: !time,
+          status: !status
+        }
+      });
     }
     
-    const event = await Event.create({
+    // Create the event
+    const eventData = {
       name,
       description,
       date,
       time,
       location,
-      // createdBy: req.user._id, // If you want to associate with the user
-    });
+      status,
+      milestones,
+      inventory
+    };
+    
+    console.log('Creating event with data:', eventData);
+    
+    const event = await Event.create(eventData);
+    console.log('Event created successfully:', event);
     
     res.status(201).json(event);
   } catch (error) {

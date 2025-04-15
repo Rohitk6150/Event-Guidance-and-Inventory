@@ -24,6 +24,7 @@ const CreateEvent = () => {
     const { token } = useAuth();
     const [title, setTitle] = useState('');
     const [date, setDate] = useState('');
+    const [time, setTime] = useState('');
     const [location, setLocation] = useState('');
     const [description, setDescription] = useState('');
     const [status, setStatus] = useState('Pending');
@@ -87,12 +88,20 @@ const CreateEvent = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+
+        // Validate required fields
+        if (!title || !date || !time || !status) {
+            setError('Please fill in all required fields: Event Title, Date, Time, and Status');
+            return;
+        }
+
         setLoading(true);
         try {
             await eventService.createEvent(
                 {
-                    title,
+                    name: title,
                     date,
+                    time,
                     location,
                     description,
                     status,
@@ -132,14 +141,25 @@ const CreateEvent = () => {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
-                    <TextField
-                        required
-                        fullWidth
+                                <TextField
+                                    required
+                                    fullWidth
                                     label="Date"
                                     type="date"
                                     InputLabelProps={{ shrink: true }}
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    required
+                                    fullWidth
+                                    label="Time"
+                                    type="time"
+                                    InputLabelProps={{ shrink: true }}
+                                    value={time}
+                                    onChange={(e) => setTime(e.target.value)}
                                 />
                             </Grid>
                             <Grid item xs={12} sm={6}>
@@ -150,22 +170,44 @@ const CreateEvent = () => {
                                     onChange={(e) => setLocation(e.target.value)}
                                 />
                             </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    required
+                                    fullWidth
+                                    select
+                                    label="Status"
+                                    value={status}
+                                    onChange={(e) => setStatus(e.target.value)}
+                                    SelectProps={{
+                                        native: true,
+                                    }}
+                                >
+                                    <option value="Pending">Pending</option>
+                                    <option value="In Progress">In Progress</option>
+                                    <option value="Completed">Completed</option>
+                                </TextField>
+                            </Grid>
                             <Grid item xs={12}>
-                    <TextField
-                        fullWidth
-                        label="Description"
-                        multiline
-                        rows={4}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                    />
+                                <TextField
+                                    fullWidth
+                                    label="Description"
+                                    multiline
+                                    rows={4}
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                />
                             </Grid>
                         </Grid>
                     </Paper>
 
                     {/* Milestones Section */}
                     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>Event Milestones</Typography>
+                        <Typography variant="h6" gutterBottom>
+                            Event Milestones (Optional)
+                            <Typography variant="body2" color="textSecondary">
+                                Add key checkpoints or deadlines for your event
+                            </Typography>
+                        </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={3}>
                                 <TextField
@@ -176,21 +218,21 @@ const CreateEvent = () => {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={3}>
-                    <TextField
-                        fullWidth
+                                <TextField
+                                    fullWidth
                                     label="Due Date"
-                        type="date"
-                        InputLabelProps={{ shrink: true }}
+                                    type="date"
+                                    InputLabelProps={{ shrink: true }}
                                     value={milestoneDate}
                                     onChange={(e) => setMilestoneDate(e.target.value)}
-                    />
+                                />
                             </Grid>
                             <Grid item xs={12} sm={3}>
-                    <TextField
-                        fullWidth
-                        label="Time"
-                        type="time"
-                        InputLabelProps={{ shrink: true }}
+                                <TextField
+                                    fullWidth
+                                    label="Time"
+                                    type="time"
+                                    InputLabelProps={{ shrink: true }}
                                     value={milestoneTime}
                                     onChange={(e) => setMilestoneTime(e.target.value)}
                                 />
@@ -250,7 +292,12 @@ const CreateEvent = () => {
 
                     {/* Inventory Section */}
                     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-                        <Typography variant="h6" gutterBottom>Associated Inventory</Typography>
+                        <Typography variant="h6" gutterBottom>
+                            Associated Inventory (Optional)
+                            <Typography variant="body2" color="textSecondary">
+                                Add items or resources needed for the event
+                            </Typography>
+                        </Typography>
                         <Grid container spacing={2}>
                             <Grid item xs={12} sm={4}>
                                 <TextField
@@ -270,8 +317,8 @@ const CreateEvent = () => {
                                 />
                             </Grid>
                             <Grid item xs={12} sm={4}>
-                    <TextField
-                        fullWidth
+                                <TextField
+                                    fullWidth
                                     label="Unit"
                                     value={inventoryUnit}
                                     onChange={(e) => setInventoryUnit(e.target.value)}

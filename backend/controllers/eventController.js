@@ -26,13 +26,14 @@ const getEventById = asyncHandler(async (req, res) => {
 // @route   POST /api/events
 // @access  Private
 const createEvent = asyncHandler(async (req, res) => {
-    const { name, description, date, time, location } = req.body;
+    const { name, description, date, time, location, status } = req.body;
     const event = await Event.create({
         name,
         description,
         date,
         time,
         location,
+        status,
         // createdBy: req.user._id, // If you're associating with a user
     });
     res.status(201).json(event);
@@ -49,6 +50,7 @@ const updateEvent = asyncHandler(async (req, res) => {
         event.date = req.body.date || event.date;
         event.time = req.body.time || event.time;
         event.location = req.body.location || event.location;
+        event.status = req.body.status || event.status;
 
         const updatedEvent = await event.save();
         res.json(updatedEvent);

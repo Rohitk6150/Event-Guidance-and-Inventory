@@ -9,24 +9,42 @@ const eventSchema = new mongoose.Schema({
     description: {
         type: String,
         trim: true,
+        required: false,
     },
     date: {
         type: Date,
         required: true,
     },
     time: {
-        type: String, // Or Date, depending on your preference
+        type: String,
         required: true,
     },
     location: {
         type: String,
         trim: true,
+        required: false,
     },
-    // You might want to associate events with a user who created them
-    // createdBy: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: 'User',
-    // },
+    status: {
+        type: String,
+        enum: ['Pending', 'In Progress', 'Completed'],
+        required: true,
+        default: 'Pending',
+    },
+    milestones: [{
+        title: String,
+        date: Date,
+        time: String,
+        description: String,
+        completed: {
+            type: Boolean,
+            default: false
+        }
+    }],
+    inventory: [{
+        name: String,
+        quantity: Number,
+        unit: String
+    }]
 }, {
     timestamps: true,
 });
