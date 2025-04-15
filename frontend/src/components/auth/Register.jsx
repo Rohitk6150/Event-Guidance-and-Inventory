@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import authService from '../../services/AuthService';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
+import { TextField, Button, Container, Typography, Box, Alert } from '@mui/material';
 
 const Register = () => {
     const navigate = useNavigate();
@@ -11,6 +11,7 @@ const Register = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
     const [loading, setLoading] = useState(false);
 
     const validateEmail = (email) => {
@@ -21,6 +22,7 @@ const Register = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
         setLoading(true);
         
         // Validate email format
@@ -44,11 +46,16 @@ const Register = () => {
                 password 
             });
             
-            if (response && response.token) {
-                login(response.token);
-                navigate('/events');
-            } else {
-                setError('Registration successful but no token received');
+            if (response) {
+                setSuccess('Registration successful! Please login with your credentials.');
+                // Clear form
+                setUsername('');
+                setEmail('');
+                setPassword('');
+                // Redirect to login after 2 seconds
+                setTimeout(() => {
+                    navigate('/login');
+                }, 2000);
             }
         } catch (err) {
             console.error('Registration error:', err);
@@ -70,9 +77,14 @@ const Register = () => {
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
                     {error && (
-                        <Typography color="error" sx={{ mt: 1, mb: 2 }}>
+                        <Alert severity="error" sx={{ mt: 1, mb: 2 }}>
                             {error}
-                        </Typography>
+                        </Alert>
+                    )}
+                    {success && (
+                        <Alert severity="success" sx={{ mt: 1, mb: 2 }}>
+                            {success}
+                        </Alert>
                     )}
                     <TextField
                         margin="normal"
