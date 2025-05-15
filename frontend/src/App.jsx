@@ -45,7 +45,7 @@ function App() {
                             <Route path="/events/create" element={<PrivateRoute><CreateEventPage /></PrivateRoute>} />
                             <Route path="/inventory" element={<PrivateRoute><InventoryListPage /></PrivateRoute>} />
                             <Route path="/inventory/add" element={<PrivateRoute><AddInventoryPage /></PrivateRoute>} />
-                            <Route path="/" element={<Navigate to="/events" />} />
+                            <Route path="/" element={<Navigate to="/login" />} />
                         </Routes>
                     </div>
                 </Router>

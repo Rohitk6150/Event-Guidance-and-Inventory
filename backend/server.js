@@ -14,16 +14,16 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: '*',  // Allow all origins
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  credentials: true,
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-}));
+// app.use(cors({
+//   origin: '*',  // Allow all origins
+//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+//   credentials: true,
+//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+// }));
 app.use(express.json());
 
 // Add a preflight handler for all routes
-app.options('*', cors());
+// app.options('*', cors());
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://nobigamer00:e1GdrWRwo7wHmmVQ@cluster0.vl7qd5h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
