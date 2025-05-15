@@ -1,28 +1,61 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
+import authService from '../../services/AuthService';
 import { TextField, Button, Container, Typography, Box } from '@mui/material';
 import GoogleLoginButton from './GoogleLoginButton';
 
 const Login = () => {
     const navigate = useNavigate();
     const { login } = useAuth();
-    const [identifier, setIdentifier] = useState('');
+    const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+
+    const validateEmail = (email) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(email);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
         setLoading(true);
+        
+        // Validate email format
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
+            setLoading(false);
+            return;
+        }
+
+        // Validate password
+        if (!password) {
+            setError('Please enter your password');
+            setLoading(false);
+            return;
+        }
+        
         try {
-            const response = await axios.post('/api/auth/login', { identifier, password });
-            login(response.data.token);
-            navigate('/events');
+            const response = await authService.login({ 
+                email,
+                password 
+            });
+            
+            if (response && response.token) {
+                login(response.token);
+                navigate('/events');
+            } else {
+                setError('Login successful but no token received');
+            }
         } catch (err) {
-            setError(err.response?.data?.message || 'Login failed');
+            console.error('Login error:', err);
+            if (err.message.includes('Invalid email or password')) {
+                setError('Invalid email or password. Please try again.');
+            } else {
+                setError(err.message || 'Login failed. Please try again.');
+            }
         } finally {
             setLoading(false);
         }
@@ -35,18 +68,24 @@ const Login = () => {
                     Login
                 </Typography>
                 <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1, width: '100%' }}>
-                    {error && <Typography color="error" sx={{ mt: 1 }}>{error}</Typography>}
+                    {error && (
+                        <Typography color="error" sx={{ mt: 1, mb: 2 }}>
+                            {error}
+                        </Typography>
+                    )}
                     <TextField
                         margin="normal"
                         required
                         fullWidth
-                        id="identifier"
-                        label="Username or Email"
-                        name="identifier"
-                        autoComplete="identifier"
+                        id="email"
+                        label="Email Address"
+                        name="email"
+                        autoComplete="email"
                         autoFocus
-                        value={identifier}
-                        onChange={(e) => setIdentifier(e.target.value)}
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        error={email !== '' && !validateEmail(email)}
+                        helperText={email !== '' && !validateEmail(email) ? 'Please enter a valid email address' : ''}
                     />
                     <TextField
                         margin="normal"

@@ -62,7 +62,7 @@ const updateInventoryItem = asyncHandler(async (req, res) => {
 const deleteInventoryItem = asyncHandler(async (req, res) => {
     const inventoryItem = await InventoryItem.findById(req.params.id);
     if (inventoryItem) {
-        await inventoryItem.remove();
+        await inventoryItem.deleteOne();
         res.json({ message: 'Inventory item removed' });
     } else {
         res.status(404);

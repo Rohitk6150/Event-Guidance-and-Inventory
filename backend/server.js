@@ -6,6 +6,7 @@ const User = require('./modals/User');
 const Event = require('./modals/Event');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const inventoryRoutes = require('./routes/inventory');
 
 // Load environment variables
 dotenv.config();
@@ -52,6 +53,9 @@ const protect = async (req, res, next) => {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 };
+
+// Mount routes
+app.use('/api/inventory', inventoryRoutes);
 
 // Test route
 app.get('/api/test', (req, res) => {
@@ -109,38 +113,35 @@ app.post('/api/auth/login', async (req, res) => {
     console.log('Login endpoint hit');
     console.log('Request body:', req.body);
     
-    const { email, identifier, password } = req.body;
+    const { email, password } = req.body;
     
-    // Use email if provided, otherwise use identifier
-    const loginEmail = email || identifier;
-    
-    if (!loginEmail || !password) {
-      return res.status(400).json({ message: 'Please provide email/username and password' });
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Please provide email and password' });
     }
     
     // Find user by email
-    const user = await User.findOne({ 
-      $or: [
-        { email: loginEmail }, 
-        { username: loginEmail }
-      ] 
+    const user = await User.findOne({ email });
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    const isMatch = await user.matchPassword(password);
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // Generate JWT
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallbacksecret', {
+      expiresIn: '30d',
     });
     
-    if (user && (await user.matchPassword(password))) {
-      // Generate JWT
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallbacksecret', {
-        expiresIn: '30d',
-      });
-      
-      res.json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        token: token,
-      });
-    } else {
-      res.status(401).json({ message: 'Invalid email/username or password' });
-    }
+    res.json({
+      _id: user._id,
+      username: user.username,
+      email: user.email,
+      token: token,
+    });
   } catch (error) {
     console.error('Error in login route:', error);
     res.status(500).json({ message: 'Server error', error: error.message });
@@ -182,20 +183,38 @@ app.post('/api/events', protect, async (req, res) => {
     console.log('Create event endpoint hit');
     console.log('Request body:', req.body);
     
-    const { name, description, date, time, location } = req.body;
+    const { name, description, date, time, location, status, milestones = [], inventory = [] } = req.body;
     
-    if (!name || !date || !time) {
-      return res.status(400).json({ message: 'Please provide required fields: name, date, time' });
+    // Validate required fields
+    if (!name || !date || !time || !status) {
+      console.log('Missing required fields:', { name, date, time, status });
+      return res.status(400).json({ 
+        message: 'Please provide required fields: name, date, time, and status',
+        missing: {
+          name: !name,
+          date: !date,
+          time: !time,
+          status: !status
+        }
+      });
     }
     
-    const event = await Event.create({
+    // Create the event
+    const eventData = {
       name,
       description,
       date,
       time,
       location,
-      // createdBy: req.user._id, // If you want to associate with the user
-    });
+      status,
+      milestones,
+      inventory
+    };
+    
+    console.log('Creating event with data:', eventData);
+    
+    const event = await Event.create(eventData);
+    console.log('Event created successfully:', event);
     
     res.status(201).json(event);
   } catch (error) {

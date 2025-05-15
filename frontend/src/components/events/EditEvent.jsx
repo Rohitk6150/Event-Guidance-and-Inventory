@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
-import { TextField, Button, Container, Typography, Box } from '@mui/material';
+import eventService from '../../services/EventService';
+import { TextField, Button, Container, Typography, Box, CircularProgress } from '@mui/material';
 
 const EditEvent = () => {
     const { id } = useParams();
@@ -21,21 +21,18 @@ const EditEvent = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await axios.get(`/api/events/${id}`, {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                const eventData = response.data;
+                const eventData = await eventService.getEventById(id, token);
                 setName(eventData.name);
                 setDescription(eventData.description || '');
-                setDate(eventData.date.substring(0, 10)); // Format date for input
+                setDate(eventData.date.substring(0, 10));
                 setTime(eventData.time || '');
                 setLocation(eventData.location || '');
             } catch (err) {
                 setError('Failed to fetch event details for editing.');
                 console.error('Error fetching event details:', err);
-                if (err.response?.status === 404) {
+                if (err.message.includes('404')) {
                     navigate('/events');
-                } else if (err.response?.status === 401) {
+                } else if (err.message.includes('401')) {
                     navigate('/login');
                 }
             } finally {
@@ -55,14 +52,14 @@ const EditEvent = () => {
         setError('');
         setLoading(true);
         try {
-            await axios.put(
-                `/api/events/${id}`,
+            await eventService.updateEvent(
+                id,
                 { name, description, date, time, location },
-                { headers: { Authorization: `Bearer ${token}` } }
+                token
             );
-            navigate('/events'); // Redirect to events list after successful update
+            navigate('/events');
         } catch (err) {
-            setError(err.response?.data?.message || 'Failed to update event');
+            setError(err.message || 'Failed to update event');
             console.error('Error updating event:', err);
         } finally {
             setLoading(false);
@@ -147,15 +144,8 @@ const EditEvent = () => {
                         sx={{ mt: 3 }}
                         disabled={loading}
                     >
-                        Save Changes
+                        Update Event
                         {loading && <span className="loading-indicator"></span>}
-                    </Button>
-                    <Button
-                        fullWidth
-                        sx={{ mt: 2 }}
-                        onClick={() => navigate(`/events/${id}`)}
-                    >
-                        Cancel
                     </Button>
                 </Box>
             </Box>

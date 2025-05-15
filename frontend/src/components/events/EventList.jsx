@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
+import eventService from '../../services/EventService';
 import {
     Typography,
     List,
@@ -12,8 +12,10 @@ import {
     IconButton,
     Box,
     CircularProgress,
+    Alert,
+    Tooltip,
 } from '@mui/material';
-import { Visibility as VisibilityIcon, Edit as EditIcon } from '@mui/icons-material';
+import { Visibility as VisibilityIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 
 const EventList = () => {
     const [events, setEvents] = useState([]);
@@ -27,15 +29,12 @@ const EventList = () => {
             setLoading(true);
             setError('');
             try {
-                const response = await axios.get('/api/events', {
-                    headers: { Authorization: `Bearer ${token}` },
-                });
-                setEvents(response.data);
+                const eventsData = await eventService.getAllEvents(token);
+                setEvents(eventsData);
             } catch (err) {
                 setError('Failed to fetch events.');
                 console.error('Error fetching events:', err);
-                // Optionally redirect to login if unauthorized
-                if (err.response?.status === 401) {
+                if (err.message.includes('401')) {
                     navigate('/login');
                 }
             } finally {
@@ -50,19 +49,44 @@ const EventList = () => {
         }
     }, [token, navigate]);
 
+    const handleEdit = (id) => {
+        navigate(`/events/edit/${id}`);
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this event?')) {
+            try {
+                await eventService.deleteEvent(id, token);
+                setEvents(events.filter(event => event._id !== id));
+            } catch (err) {
+                setError(err.message || 'Failed to delete event');
+            }
+        }
+    };
+
     if (loading) {
         return <Box display="flex" justifyContent="center" alignItems="center" minHeight="300px"><CircularProgress /></Box>;
     }
 
     if (error) {
-        return <Typography color="error">{error}</Typography>;
+        return <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>;
     }
 
     return (
         <div>
-            <Typography variant="h4" gutterBottom>
-                Upcoming Events
-            </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography variant="h4">
+                    Upcoming Events
+                </Typography>
+                <Button
+                    variant="contained"
+                    color="primary"
+                    component={Link}
+                    to="/events/create"
+                >
+                    Create Event
+                </Button>
+            </Box>
             {events.length > 0 ? (
                 <List>
                     {events.map(event => (
@@ -70,14 +94,21 @@ const EventList = () => {
                             <ListItem alignItems="center">
                                 <ListItemText
                                     primary={event.name}
-                                    secondary={`Date: ${new Date(event.date).toLocaleDateString()}`}
+                                    secondary={`Date: ${new Date(event.date).toLocaleDateString()}${event.time ? ` at ${event.time}` : ''}`}
                                 />
                                 <IconButton edge="end" aria-label="view" component={Link} to={`/events/${event._id}`}>
                                     <VisibilityIcon />
                                 </IconButton>
-                                <IconButton edge="end" aria-label="edit" component={Link} to={`/events/edit/${event._id}`}>
-                                    <EditIcon />
-                                </IconButton>
+                                <Tooltip title="Edit">
+                                    <IconButton edge="end" aria-label="edit" onClick={() => handleEdit(event._id)}>
+                                        <EditIcon />
+                                    </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Delete">
+                                    <IconButton edge="end" aria-label="delete" onClick={() => handleDelete(event._id)}>
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </Tooltip>
                             </ListItem>
                         </Paper>
                     ))}
