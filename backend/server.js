@@ -15,16 +15,16 @@ dotenv.config();
 const app = express();
 
 // Middleware
-// app.use(cors({
-//   origin: '*',  // Allow all origins
-//   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-//   credentials: true,
-//   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
-// }));
+app.use(cors({
+  origin: 'http://localhost:5173',  // Your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'Origin']
+}));
 app.use(express.json());
 
 // Add a preflight handler for all routes
-// app.options('*', cors());
+app.options('*', cors());
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGO_URI || "mongodb+srv://nobigamer00:e1GdrWRwo7wHmmVQ@cluster0.vl7qd5h.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0")
@@ -56,96 +56,13 @@ const protect = async (req, res, next) => {
 
 // Mount routes
 app.use('/api/inventory', inventoryRoutes);
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api/events', require('./routes/event'));
 
 // Test route
 app.get('/api/test', (req, res) => {
   console.log('Test route hit');
   res.json({ message: 'API is working' });
-});
-
-// Register route
-app.post('/api/auth/register', async (req, res) => {
-  try {
-    console.log('Register endpoint hit');
-    console.log('Request body:', req.body);
-    
-    const { username, email, password } = req.body;
-    
-    if (!username || !email || !password) {
-      return res.status(400).json({ message: 'Please provide all required fields' });
-    }
-
-    // Check if user exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({ message: 'User already exists' });
-    }
-
-    // Create user
-    const user = await User.create({
-      username,
-      email,
-      password, // Password hashing is handled by the User model
-    });
-
-    if (user) {
-      // Generate JWT
-      const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallbacksecret', {
-        expiresIn: '30d',
-      });
-
-      res.status(201).json({
-        _id: user._id,
-        username: user.username,
-        email: user.email,
-        token: token,
-      });
-    }
-  } catch (error) {
-    console.error('Error in register route:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
-});
-
-// Login route
-app.post('/api/auth/login', async (req, res) => {
-  try {
-    console.log('Login endpoint hit');
-    console.log('Request body:', req.body);
-    
-    const { email, password } = req.body;
-    
-    if (!email || !password) {
-      return res.status(400).json({ message: 'Please provide email and password' });
-    }
-    
-    // Find user by email
-    const user = await User.findOne({ email });
-    
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    
-    const isMatch = await user.matchPassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid email or password' });
-    }
-    
-    // Generate JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET || 'fallbacksecret', {
-      expiresIn: '30d',
-    });
-    
-    res.json({
-      _id: user._id,
-      username: user.username,
-      email: user.email,
-      token: token,
-    });
-  } catch (error) {
-    console.error('Error in login route:', error);
-    res.status(500).json({ message: 'Server error', error: error.message });
-  }
 });
 
 // Event Routes
