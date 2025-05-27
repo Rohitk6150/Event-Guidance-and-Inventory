@@ -15,6 +15,7 @@ import {
     ListItem,
     ListItemText,
     ListItemSecondaryAction,
+    Divider,
 } from '@mui/material';
 import { Add as AddIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import eventService from '../../services/EventService';
@@ -43,6 +44,15 @@ const CreateEvent = () => {
     const [inventoryName, setInventoryName] = useState('');
     const [inventoryQuantity, setInventoryQuantity] = useState(0);
     const [inventoryUnit, setInventoryUnit] = useState('');
+    const [inventoryCost, setInventoryCost] = useState(0);
+
+    // Cost tracking state
+    const [costs, setCosts] = useState([]);
+    const [costCategory, setCostCategory] = useState('');
+    const [costDescription, setCostDescription] = useState('');
+    const [costAmount, setCostAmount] = useState(0);
+    const [budgetTotal, setBudgetTotal] = useState(0);
+    const [budgetCurrency, setBudgetCurrency] = useState('USD');
 
     const handleAddMilestone = () => {
         if (milestoneTitle && milestoneDate) {
@@ -66,17 +76,40 @@ const CreateEvent = () => {
         setMilestones(updatedMilestones);
     };
 
+    const handleAddCost = () => {
+        if (costCategory && costAmount > 0) {
+            const newCost = {
+                category: costCategory,
+                description: costDescription,
+                amount: costAmount,
+                date: new Date(),
+                status: 'Pending'
+            };
+            setCosts([...costs, newCost]);
+            setCostCategory('');
+            setCostDescription('');
+            setCostAmount(0);
+        }
+    };
+
+    const handleRemoveCost = (index) => {
+        const updatedCosts = costs.filter((_, i) => i !== index);
+        setCosts(updatedCosts);
+    };
+
     const handleAddInventory = () => {
         if (inventoryName && inventoryQuantity > 0) {
             const newInventory = {
                 name: inventoryName,
                 quantity: inventoryQuantity,
                 unit: inventoryUnit,
+                cost: inventoryCost
             };
             setInventory([...inventory, newInventory]);
             setInventoryName('');
             setInventoryQuantity(0);
             setInventoryUnit('');
+            setInventoryCost(0);
         }
     };
 
@@ -107,6 +140,11 @@ const CreateEvent = () => {
                     status,
                     milestones,
                     inventory,
+                    costs,
+                    budget: {
+                        total: budgetTotal,
+                        currency: budgetCurrency
+                    }
                 },
                 token
             );
@@ -195,21 +233,143 @@ const CreateEvent = () => {
                                     rows={4}
                                     value={description}
                                     onChange={(e) => setDescription(e.target.value)}
+                                    sx={{
+                                        '& .MuiInputBase-root': {
+                                            maxHeight: '55px'
+                                        }
+                                    }}
                                 />
                             </Grid>
                         </Grid>
                     </Paper>
 
+                    {/* Budget and Cost Tracking */}
+                    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                        <Typography variant="h6" gutterBottom>
+                            Budget and Cost Tracking
+                        </Typography>
+                        <Grid container spacing={2}>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    label="Total Budget"
+                                    type="number"
+                                    value={budgetTotal}
+                                    onChange={(e) => setBudgetTotal(Number(e.target.value))}
+                                    InputProps={{
+                                        startAdornment: <Typography sx={{ mr: 1 }}>{budgetCurrency}</Typography>
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={6}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    label="Currency"
+                                    value={budgetCurrency}
+                                    onChange={(e) => setBudgetCurrency(e.target.value)}
+                                    SelectProps={{
+                                        native: true,
+                                    }}
+                                >
+                                    <option value="USD">USD</option>
+                                    <option value="EUR">EUR</option>
+                                    <option value="GBP">GBP</option>
+                                    <option value="INR">INR</option>
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Divider sx={{ my: 2 }} />
+                                <Typography variant="subtitle1" gutterBottom>
+                                    Add Cost Item
+                                </Typography>
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <TextField
+                                    fullWidth
+                                    select
+                                    value={costCategory}
+                                    onChange={(e) => setCostCategory(e.target.value)}
+                                    SelectProps={{
+                                        native: true,
+                                    }}
+                                    sx={{
+                                        '& .MuiSelect-select': {
+                                            transition: 'all 0.3s ease'
+                                        },
+                                        '&:hover .MuiSelect-select': {
+                                            backgroundColor: 'rgba(0, 0, 0, 0.04)'
+                                        }
+                                    }}
+                                >
+                                    <option value="">Select Category</option>
+                                    <option value="Venue">Venue</option>
+                                    <option value="Catering">Catering</option>
+                                    <option value="Equipment">Equipment</option>
+                                    <option value="Staff">Staff</option>
+                                    <option value="Marketing">Marketing</option>
+                                    <option value="Other">Other</option>
+                                </TextField>
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <TextField
+                                    fullWidth
+                                    label="Amount"
+                                    type="number"
+                                    value={costAmount}
+                                    onChange={(e) => setCostAmount(Number(e.target.value))}
+                                    InputProps={{
+                                        startAdornment: <Typography sx={{ mr: 1 }}>{budgetCurrency}</Typography>
+                                    }}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={4}>
+                                <TextField
+                                    fullWidth
+                                    label="Description"
+                                    value={costDescription}
+                                    onChange={(e) => setCostDescription(e.target.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={12}>
+                                <Button
+                                    startIcon={<AddIcon />}
+                                    onClick={handleAddCost}
+                                    variant="outlined"
+                                >
+                                    Add Cost Item
+                                </Button>
+                            </Grid>
+                        </Grid>
+                        {costs.length > 0 && (
+                            <List sx={{ mt: 2 }}>
+                                {costs.map((cost, index) => (
+                                    <ListItem key={index}>
+                                        <ListItemText
+                                            primary={`${cost.category} - ${budgetCurrency} ${cost.amount}`}
+                                            secondary={cost.description}
+                                        />
+                                        <ListItemSecondaryAction>
+                                            <IconButton edge="end" onClick={() => handleRemoveCost(index)}>
+                                                <DeleteIcon />
+                                            </IconButton>
+                                        </ListItemSecondaryAction>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        )}
+                    </Paper>
+
                     {/* Milestones Section */}
                     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                         <Typography variant="h6" gutterBottom>
-                            Event Milestones (Optional)
+                            Event Milestones
                             <Typography variant="body2" color="textSecondary">
                                 Add key checkpoints or deadlines for your event
                             </Typography>
                         </Typography>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={3}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
                                     label="Milestone Title"
@@ -217,30 +377,30 @@ const CreateEvent = () => {
                                     onChange={(e) => setMilestoneTitle(e.target.value)}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={3}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Due Date"
+                                    label="Milestone Date"
                                     type="date"
                                     InputLabelProps={{ shrink: true }}
                                     value={milestoneDate}
                                     onChange={(e) => setMilestoneDate(e.target.value)}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={3}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Time"
+                                    label="Milestone Time"
                                     type="time"
                                     InputLabelProps={{ shrink: true }}
                                     value={milestoneTime}
                                     onChange={(e) => setMilestoneTime(e.target.value)}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={3}>
+                            <Grid item xs={12} sm={6}>
                                 <TextField
                                     fullWidth
-                                    label="Description"
+                                    label="Milestone Description"
                                     value={milestoneDescription}
                                     onChange={(e) => setMilestoneDescription(e.target.value)}
                                 />
@@ -293,13 +453,13 @@ const CreateEvent = () => {
                     {/* Inventory Section */}
                     <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
                         <Typography variant="h6" gutterBottom>
-                            Associated Inventory (Optional)
+                            Associated Inventory
                             <Typography variant="body2" color="textSecondary">
                                 Add items or resources needed for the event
                             </Typography>
                         </Typography>
                         <Grid container spacing={2}>
-                            <Grid item xs={12} sm={4}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField
                                     fullWidth
                                     label="Item Name"
@@ -307,7 +467,7 @@ const CreateEvent = () => {
                                     onChange={(e) => setInventoryName(e.target.value)}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField
                                     fullWidth
                                     label="Quantity"
@@ -316,12 +476,24 @@ const CreateEvent = () => {
                                     onChange={(e) => setInventoryQuantity(parseInt(e.target.value) || 0)}
                                 />
                             </Grid>
-                            <Grid item xs={12} sm={4}>
+                            <Grid item xs={12} sm={3}>
                                 <TextField
                                     fullWidth
                                     label="Unit"
                                     value={inventoryUnit}
                                     onChange={(e) => setInventoryUnit(e.target.value)}
+                                />
+                            </Grid>
+                            <Grid item xs={12} sm={3}>
+                                <TextField
+                                    fullWidth
+                                    label="Cost"
+                                    type="number"
+                                    value={inventoryCost}
+                                    onChange={(e) => setInventoryCost(Number(e.target.value))}
+                                    InputProps={{
+                                        startAdornment: <Typography sx={{ mr: 1 }}>{budgetCurrency}</Typography>
+                                    }}
                                 />
                             </Grid>
                             <Grid item xs={12}>
@@ -340,7 +512,7 @@ const CreateEvent = () => {
                                     <ListItem key={index}>
                                         <ListItemText
                                             primary={item.name}
-                                            secondary={`Quantity: ${item.quantity} ${item.unit}`}
+                                            secondary={`Quantity: ${item.quantity} ${item.unit} - Cost: ${budgetCurrency} ${item.cost}`}
                                         />
                                         <ListItemSecondaryAction>
                                             <IconButton edge="end" onClick={() => handleRemoveInventory(index)}>
